@@ -1,8 +1,8 @@
 import React from 'react';
-import { RectButtonProps } from 'react-native-gesture-handler';
+import { ReactButtonProps } from 'react-native-gesture-handler';
 
 import { CarDTO } from '../../dtos/CarDTO';
-
+import { getAccessoryIcon } from '../../utils/getAccessoryIcon';
 import {
   Container,
   Details,
@@ -13,39 +13,42 @@ import {
   Period,
   Price,
   Type,
-  CarImage
-} from './styles';
-import { getAccessoryIcon } from '../../utils/getAccessoryIcon';
+  CarImage,
 
-interface Props extends RectButtonProps {
+} from './styles';
+
+interface Props extends ReactButtonProps {
   data: CarDTO;
 }
 
-export function Car({ data, ...rest }: Props) {
-  const MotorIcon = getAccessoryIcon(data.fuel_type)
+export function Car({data, ...rest} : Props){
+  // função para exibir os icones dinamicamente
+  const MotorIcon = getAccessoryIcon(data.fuel_type);
 
-  return (
-    <Container {...rest}>
-      <Details>
-        <Brand>{data.brand}</Brand>
-        <Name>{data.name}</Name>
+return (
+ <Container {...rest}>
+  <Details>
+    <Brand>{data.brand}</Brand>
+    <Name>{data.name}</Name>
 
-        <About>
-          <Rent>
-            <Period>{data.rent.period}</Period>
-            <Price>{`R$ ${data.rent.price}`}</Price>
-          </Rent>
+    <About>
+       <Rent>
+         <Period>{data.period}</Period> 
+         <Price>{`RS ${data.price}`}</Price>
+       </Rent>
 
-          <Type>
-            <MotorIcon />
-          </Type>
-        </About>
-      </Details>
+        <Type>
+          <MotorIcon />
+        </Type>
 
-      <CarImage 
-        source={{ uri: data.thumbnail }}
-        resizeMode="contain"
-      />
-    </Container>
+    </About>
+  </Details>
+
+  <CarImage 
+    source= {{ uri: data.thumbnail}}
+    resizeMode="contain"
+   />
+
+ </Container>
   );
 }

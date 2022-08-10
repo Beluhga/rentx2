@@ -1,11 +1,10 @@
 import React from 'react';
-import { StatusBar, useWindowDimensions } from 'react-native';
-import { StackScreenProps } from '@react-navigation/stack';
-
+import { StatusBar, useWindowDimensions} from 'react-native';
 import { ConfirmButton } from '../../components/ConfirmButton';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-import LogoSvg from '../../assets/logo_background_gray.svg';
-import DoneSvg from '../../assets/done.svg';
+import LogoSvg from '../../../assets/logo_background_gray.svg';
+import DoneSvg from '../../../assets/done.svg';
 
 import {
   Container,
@@ -13,50 +12,54 @@ import {
   Title,
   Message,
   Footer
+  
 } from './styles';
-import { RootStackParamList } from '../../types/react-navigation/stack.routes';
 
-export interface ConfirmationParams {
+// para Flexibilizar a interface
+interface Params {
   title: string;
   message: string;
-  screenToNavigate: 'Splash' | 'SignIn' | 'SignUpFirstStep' | 'SignUpSecondStep' | 'Home' | 'CarDetails' | 'Scheduling' | 'SchedulingDetails' | 'Confirmation' | 'MyCars';
+  nextScreenRoute: string;
+
 }
 
-type Props = StackScreenProps<RootStackParamList, 'Confirmation'>;
+export function Confirmation(){
+    const {width} = useWindowDimensions(); /* esse usa dentro da função para nao da erro */
 
-export function Confirmation({ navigation, route }: Props) {
-  const { width } = useWindowDimensions();
+  const navigation = useNavigation<any>();
+  const route = useRoute();
 
-  const { message, screenToNavigate, title } = route.params;
+  // para Flexibilizar a interface, usa dessa forma quando quiser passar os componentes atraves de uma funcao
+  const { title, message, nextScreenRoute } = route.params as Params
 
-  function handleGoToScreen() {
-    navigation.reset({
-      index: 0,
-      routes: [
-        { name: screenToNavigate }
-      ] 
-    })
+  function handleConfirm() {
+    navigation.navigate(nextScreenRoute)
   }
 
-  return (
-    <Container>
-      <StatusBar 
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
-      <LogoSvg width={width} />
+  
 
-      <Content>
+return (
+ <Container>
+    <StatusBar 
+     barStyle="light-content"
+     translucent
+     backgroundColor="transparent"
+    />
+    <LogoSvg width={width} />
+
+    <Content>
         <DoneSvg width={80} height={80} />
         <Title>{title}</Title>
 
-        <Message>{message}</Message>
-      </Content>
+        <Message>
+           {message}
+        </Message>
+    </Content>
 
-      <Footer>
-        <ConfirmButton title="OK" onPress={handleGoToScreen} />
-      </Footer>
-    </Container>
+    <Footer>
+      <ConfirmButton title="OK" onPress={handleConfirm} /> 
+    </Footer>
+
+ </Container>
   );
 }

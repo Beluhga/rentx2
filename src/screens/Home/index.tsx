@@ -1,134 +1,105 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Ionicons } from '@expo/vector-icons';
-import { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { useTheme } from 'styled-components';
-import { PanGestureHandler } from 'react-native-gesture-handler';
 
-import { api } from '../../services/api';
-import { CarDTO } from '../../dtos/CarDTO';
-
+import {api} from '../../services/api';
+import Logo from '../../../assets/logo.svg';
 import { Car } from '../../components/Car';
+import { CarDTO } from '../../dtos/CarDTO';
 import { LoadAnimation } from '../../components/LoadAnimation';
 
-import Logo from "../../assets/logo.svg";
-
 import {
-  AnimatedMyCarsButton,
-  AnimatedMyCarsView,
-  CarList,
   Container,
   Header,
+  TotalCars,
   HeaderContent,
-  TotalCars
+  CarList,
+  
 } from './styles';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/react-navigation/stack.routes';
 
-type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
-export function Home({ navigation }: Props) {
-  const [cars, setCars] = useState<CarDTO[]>([]);
+export function Home(){
+  const [cars, setCars] = useState<CarDTO[]>([]); // para tipar o carDTO
   const [loading, setLoading] = useState(true);
-  const theme = useTheme()
 
-  const positionX = useSharedValue(0);
-  const positionY = useSharedValue(0);
 
-  const animatedMyCarsViewStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: positionX.value },
-        { translateY: positionY.value }
-      ]
-    }
-  })
+  const navigation = useNavigation<any>();
 
-  const onGestureEvent = useAnimatedGestureHandler({
-    onStart(_, ctx: any) {
-      ctx.positionX = positionX.value,
-      ctx.positionY = positionY.value
-    },
-    onActive(event, ctx: any) {
-      positionX.value = event.translationX + ctx.positionX,
-      positionY.value = event.translationY + ctx.positionY
-    },
-    onEnd() {
-      positionX.value = withSpring(0),
-      positionY.value = withSpring(0)
-    }
-  });
-
+  //car: CarDTO é o parametro para passar os dados do carro selecionado
   function handleCarDetails(car: CarDTO) {
-    navigation.navigate('CarDetails', { car });
+    navigation.navigate('CarDetails', {car})
   }
 
-  function handleOpenMyCars() {
-    navigation.navigate('MyCars')
-  }
-
+  // para buscar os dados da API
   useEffect(() => {
-    async function fetchCars() {
+    let isMounted = true;
+
+    async function fetchCars(){
       try {
         const response = await api.get('/cars');
+        if(isMounted){
         setCars(response.data);
+        }
+
       } catch (error) {
         console.log(error);
       } finally {
+        if(isMounted){
         setLoading(false);
+        }
       }
     }
-
+      
     fetchCars();
-  }, [])
+    // função de limpeza
+    return () => {
+      isMounted = false
 
-  return (
-    <Container>
-      <StatusBar 
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
+    }
+  },[]);
 
-      <Header>
-        <HeaderContent>
-          <Logo
-            width={RFValue(108)}
-            height={RFValue(12)}
-          />
 
-          <TotalCars>
-            { loading ? `Buscando carros...` : `Total de ${cars.length} carros` }
-          </TotalCars>
+
+return (
+ <Container>
+  <StatusBar
+    barStyle="light-content" // para ficar com os estatus do celular com cor diferente
+    backgroundColor="transparent"
+    translucent
+    />
+    <Header>
+      <HeaderContent>
+        <Logo
+          width={RFValue(108)}
+          height={RFValue(12)}
+         />
+        {
+          // para não mostra o total de carros ate ser carregado
+          !loading &&
+        <TotalCars>
+          Total de {cars.length} carros
+        </TotalCars>
+        }
         </HeaderContent>
-      </Header>
+    </Header>
+    {loading ? <LoadAnimation /> :
+      <CarList
+        data={cars}
+        keyExtractor={item => String(item.id)}
+        renderItem={({item}) => 
+          <Car
+          data={item} 
+          onPress={() => handleCarDetails(item)} /> // passando dados entre telas
+      }
+    />
+  }
 
-      { loading ? <LoadAnimation /> : (
-        <CarList 
-          data={cars}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <Car 
-              data={item} 
-              onPress={() => handleCarDetails(item)}
-            />
-          )}
-        />
-      )}
 
-      <PanGestureHandler onGestureEvent={onGestureEvent}>
-        <AnimatedMyCarsView style={animatedMyCarsViewStyle}>
-          <AnimatedMyCarsButton onPress={handleOpenMyCars}>
-            <Ionicons 
-              name="ios-car-sport" 
-              size={32}
-              color={theme.colors.shape}
-            />
-          </AnimatedMyCarsButton>
-        </AnimatedMyCarsView>
-      </PanGestureHandler>
-
-    </Container>
+  
+ </Container>
   );
 }
+
+
+

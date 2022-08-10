@@ -1,141 +1,131 @@
-import { StackScreenProps } from '@react-navigation/stack';
-import React from 'react';
-import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert
+} from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTheme } from 'styled-components';
-import * as Yup from 'yup';
+import { api } from '../../../services/api';
 
 import { BackButton } from '../../../components/BackButton';
-import { RootStackParamList } from '../../../types/react-navigation/stack.routes';
+import { Bullet } from '../../../components/Bullet';
+import {Button} from '../../../components/Button';
+import { PasswordInput } from '../../../components/PasswordInput';
+
 
 import {
-  ConfirmNewPasswordInput,
   Container,
-  FinishRegisterButton,
-  Form,
-  FormTitle,
   Header,
-  NewPasswordInput,
-  ScrollableContainer,
-  SignUpFirstStep,
-  SignUpSecondStep,
-  SignUpSteps,
-  SubTitle,
-  Title
+  Step,
+  Title,
+  SUBTitle,
+  Form,
+  FormTitle
 } from './styles';
 
-export interface SignUpSecondStepParams {
+interface Params {
   user: {
-    name: string;
-    email: string;
-    driverLicense: string;
+    name:string 
+    email:string 
+    driverLicense: number
   }
 }
 
-type Props = StackScreenProps<RootStackParamList, 'SignUpSecondStep'>;
+// para Flexibilizar a interface
+export function SecondStep(){
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
 
-export function SecondStep({ navigation, route }: Props) {
+  const navigation = useNavigation();
+  const route = useRoute();
   const theme = useTheme();
-  const [newPassword, setNewPassword] = useState('');
-  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
 
-  const { user } = route.params;
+  const { user } = route.params as Params
 
-  function handleGoBack() {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
+  function handleBack(){
+    navigation.goBack();
   }
 
-  async function handleFinishRegister() {
-    try {
-      const schema = Yup.object().shape({
-        newPassword: Yup
-          .string()
-          .required('Senha é obrigatória'),
-        newPasswordConfirmation: Yup
-          .string()
-          .required('Confirmação de senha é obrigatória')
-          .equals([Yup.ref('newPassword')], 'A confirmação de senha precisa ser igual à senha')
-      })
+ async function handleRegister() {
+    if(!password || !passwordConfirm){
+      return Alert.alert('Informe a senha e a confirmação');
+    }
 
-      const data = { newPassword, newPasswordConfirmation };
-      await schema.validate(data, { abortEarly: false });
+    if(password != passwordConfirm){
+      return Alert.alert('As senhas não são iguais');
+    }
 
-      // Enviar para API e Cadastrar
-
+    // Enviar para API e cadastra ('users' é o nome da rota do backend)
+    //para Flexibilizar a interface 
+    await api.post('/users', {
+      name: user.name,
+      email: user.email,
+      driver_license: user.driverLicense,
+      password
+    })
+    // para quando ter tudo certo enviar as coisas para o API
+    .then(() => {
       navigation.navigate('Confirmation', {
-        title: 'Conta criada!',
-        screenToNavigate: 'SignIn',
-        message: `Agora é só fazer login\ne aproveitar.`
+        nextScreenRoute: 'SignIn',
+        title: 'Conta Criada',
+        message: `Agora é so fazer login\ne aproveitar`
       });
-    } catch (error) {
-      if (error instanceof Yup.ValidationError) {
-        return Alert.alert('Opa', error.errors.join('\n'));
-      }
-
-      return Alert.alert(
-        'Erro na autenticação', 
-        'Ocorreu um erro ao fazer login, verifique as credenciais.'
-      );
-    }
+    })
+    .catch((error) => {
+      console.log(error)
+      Alert.alert('Opa', 'Não foi possível cadastrar')
+    });
   }
+return (
+  <KeyboardAvoidingView behavior="position" enabled>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <Container>
+        <Header>
+          <BackButton onPress={handleBack} />
+          <Step>
+            <Bullet active/>
+            <Bullet />
 
-  return (
-    <Container>
-      <Header>
-        <BackButton onPress={handleGoBack} />
-        
-        <SignUpSteps>
-          <SignUpFirstStep active />
-          <SignUpSecondStep />
-        </SignUpSteps>
-      </Header>
+          </Step>
+        </Header>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollableContainer
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <Title>
-            Crie sua{'\n'}
-            conta
-          </Title>
-          <SubTitle>
-            Faça seu cadastro de{'\n'}
-            forma rápida e fácil
-          </SubTitle>
+        <Title>
+          Crie sua{'\n'}conta
+        </Title>
 
-          <Form>
-            <FormTitle>2. Senha</FormTitle>
+        <SUBTitle>
+          Faça seu cadastro de{'\n'}
+          forma rápida e fácil
+        </SUBTitle>
 
-            <NewPasswordInput
-              placeholder="Senha"
-              autoCorrect={false}
-              autoCapitalize="none"
-              value={newPassword}
-              onChangeText={setNewPassword}
+        <Form>
+          <FormTitle>2. Senha</FormTitle>
+            <PasswordInput 
+              iconName='lock'
+              placeholder='Senha'
+              onChangeText={setPassword}
+              value={password}
             />
-
-            <ConfirmNewPasswordInput
-              placeholder="Repetir Senha"
-              autoCorrect={false}
-              autoCapitalize="none"
-              value={newPasswordConfirmation}
-              onChangeText={setNewPasswordConfirmation}
+             <PasswordInput 
+              iconName='lock'
+              placeholder='Repetir Senha'
+              onChangeText={setPasswordConfirm}
+              value={passwordConfirm}
             />
+   
+   
+        </Form>
 
-            <FinishRegisterButton
-              title="Cadastrar"
-              color={theme.colors.success}
-              onPress={handleFinishRegister}
-            />
-          </Form>
-        </ScrollableContainer>
-      </KeyboardAvoidingView>
-    </Container>
+        <Button 
+          color={theme.colors.success}
+          title="Cadastrar"
+          onPress={handleRegister}
+        />
+
+      </Container>
+  </TouchableWithoutFeedback>
+ </KeyboardAvoidingView>
   );
 }

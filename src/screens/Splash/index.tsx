@@ -2,8 +2,8 @@ import { StackScreenProps } from '@react-navigation/stack';
 import React, { useEffect } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate, Extrapolate, runOnJS } from 'react-native-reanimated';
 
-import BrandSvg from '../../assets/brand.svg';
-import LogoSvg from '../../assets/logo.svg';
+import BrandSvg from '../../../assets/brand.svg';
+import LogoSvg from '../../../assets/logo.svg';
 import { RootStackParamList } from '../../types/react-navigation/stack.routes';
 
 import {

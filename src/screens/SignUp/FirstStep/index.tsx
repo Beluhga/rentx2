@@ -1,136 +1,117 @@
-import { StackScreenProps } from '@react-navigation/stack';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { BackButton } from '../../../components/BackButton';
+import { Bullet } from '../../../components/Bullet';
+import { Input } from '../../../components/Input';
+import {Button} from '../../../components/Button';
+
 import * as Yup from 'yup';
 
-import { BackButton } from '../../../components/BackButton';
-import { RootStackParamList } from '../../../types/react-navigation/stack.routes';
 
 import {
   Container,
-  DriverLicenseInput,
-  EmailInput,
-  Form,
-  FormTitle,
   Header,
-  NameInput,
-  NextStepButton,
-  ScrollableContainer,
-  SignUpFirstStep,
-  SignUpSecondStep,
-  SignUpSteps,
-  SubTitle,
-  Title
+  Step,
+  Title,
+  SUBTitle,
+  Form,
+  FormTitle
 } from './styles';
 
-type Props = StackScreenProps<RootStackParamList, 'SignUpFirstStep'>;
-
-export function FirstStep({ navigation }: Props) {
+export function FirstStep(){
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [driverLicense, setDriverLicense] = useState('');
+  const [driverLicense, setDriverLicense] = useState(0);
 
-  function handleGoBack() {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
+  const navigation = useNavigation();
+
+  function handleBack(){
+    navigation.goBack();
   }
 
-  async function handleGoToNextStep() {
+  async function handleNextStep(){
     try {
       const schema = Yup.object().shape({
-        name: Yup
-          .string()
-          .required('Nome é obrigatório'),
-        email: Yup
-          .string()
-          .required('E-mail obrigatório')
-          .email('Digite um e-mail válido'),
-        driverLicense: Yup
-          .string()
-          .required('CNH é obrigatória')
+        driverLicense: Yup.number()
+        .min(9, "CNH tem 9 numeros")
+        .required('CNH é obrigatória'),
+        email: Yup.string()
+        .email('E-mail inválido')
+        .required('E-mail é obrigatório'),
+        name: Yup.string()
+        .required('Nome é obrigatório')
       });
 
-      const data = { name, email, driverLicense };
-      await schema.validate(data, { abortEarly: false });
+      const data = { name, email, driverLicense};
+      await schema.validate(data);
 
-      navigation.navigate('SignUpSecondStep', { user: data });
-    } catch (error) {
-      if (error instanceof Yup.ValidationError) {
-        return Alert.alert('Opa', error.errors.join('\n'));
+      navigation.navigate('SecondStep', { user: data});
+    } catch(error){
+      if(error instanceof Yup.ValidationError) {
+        return Alert.alert('Opa', error.message)
       }
 
-      return Alert.alert(
-        'Erro na autenticação', 
-        'Ocorreu um erro ao fazer login, verifique as credenciais.'
-      );
     }
-
   }
+return (
+  <KeyboardAvoidingView behavior="position" enabled>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <Container>
+        <Header>
+          <BackButton onPress={handleBack} />
+          <Step>
+            <Bullet active/>
+            <Bullet />
 
-  return (
-    <Container>
-      <Header>
-        <BackButton onPress={handleGoBack} />
-        
-        <SignUpSteps>
-          <SignUpFirstStep active />
-          <SignUpSecondStep />
-        </SignUpSteps>
-      </Header>
+          </Step>
+        </Header>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollableContainer
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <Title>
-            Crie sua{'\n'}
-            conta
-          </Title>
-          <SubTitle>
-            Faça seu cadastro de{'\n'}
-            forma rápida e fácil
-          </SubTitle>
+        <Title>
+          Crie sua{'\n'}conta
+        </Title>
 
-          <Form>
-            <FormTitle>1. Dados</FormTitle>
+        <SUBTitle>
+          Faça seu cadastro de{'\n'}
+          forma rápida e fácil
+        </SUBTitle>
 
-            <NameInput
-              iconName="user"
-              placeholder="Nome"
-              autoCorrect={false}
-              value={name}
-              onChangeText={setName}
-            />
+        <Form>
+          <FormTitle>1. Dados</FormTitle>
 
-            <EmailInput
-              iconName="mail"
-              placeholder="E-mail"
-              keyboardType="email-address"
-              autoCorrect={false}
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
+          <Input 
+            iconName="user"
+            placeholder="Nome"
+            onChangeText={setName}
+            value={name}
+          />
+          <Input 
+            iconName="mail"
+            placeholder="E-mail"
+            keyboardType='email-address'
+            onChangeText={setEmail}
+            value={email}
+          />
+          <Input 
+            iconName="credit-card"
+            placeholder="CNH"
+            keyboardType='numeric'
+            onChangeText={(value) => setDriverLicense(Number(value))} // modo de passar de forma numerica            
+          />
+        </Form>
 
-            <DriverLicenseInput
-              iconName="credit-card"
-              placeholder="CNH"
-              value={driverLicense}
-              onChangeText={setDriverLicense}
-            />
+        <Button 
+          title="Próximo"
+          onPress={handleNextStep}
+        />
 
-            <NextStepButton
-              title="Próximo"
-              onPress={handleGoToNextStep}
-            />
-          </Form>
-        </ScrollableContainer>
-      </KeyboardAvoidingView>
-    </Container>
+      </Container>
+  </TouchableWithoutFeedback>
+ </KeyboardAvoidingView>
   );
 }

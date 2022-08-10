@@ -1,119 +1,145 @@
-import React, { useState } from 'react';
-import { Alert, Platform, StatusBar } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+
+import {StatusBar,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert
+} from 'react-native';
 import * as Yup from 'yup';
-import { StackScreenProps } from '@react-navigation/stack';
+import theme from '../../../styles/theme';
 
-import { RootStackParamList } from '../../types/react-navigation/stack.routes';
+import {Button} from '../../components/Button'
+import { Input } from '../../components/Input';
+import { PasswordInput } from '../../components/PasswordInput';
+
+
 import {
-  KAV,
-  ScrollableContainer, 
-  Header, 
-  Title, 
-  SubTitle, 
-  Footer, 
-  RegisterButton, 
-  LoginButton, 
-  Form,
-  EmailInput,
-  PasswordInput
+  Container,
+  Header,
+  Title,
+  SubTitle,
+  Footer,
+  Form
 } from './styles';
+import { useAuth } from '../../hooks/auth';
 
-type Props = StackScreenProps<RootStackParamList, 'SignIn'>;
 
-export function SignIn({ navigation }: Props) {
+export function SignIn(){
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const navigation = useNavigation();
+  const { signIn } = useAuth();
+
   async function handleSignIn() {
-    try {
+    try{
       const schema = Yup.object().shape({
-        email: Yup
-          .string()
+        email: Yup.string()
           .required('E-mail obrigatório')
           .email('Digite um e-mail válido'),
-        password: Yup
-          .string()
-          .required('Senha obrigatória')
-      })
-  
-      await schema.validate({ email, password }, { abortEarly: false });
-      Alert.alert('tudo certo');
+        password: Yup.string()
+          .required('A senha é obrigatório') 
+      });
 
-      // Fazer login.
-    } catch (error) {
-      if (error instanceof Yup.ValidationError) {
-        return Alert.alert('Opa', error.errors.join('\n'));
+      await schema.validate({email, password})
+
+      // email e senha autenticados
+      signIn({email, password});
+    }catch(error) {
+      if(error instanceof Yup.ValidationError){
+        return Alert.alert('Opa', error.message);
+      }else {
+         Alert.alert(
+          'Error na autenticação',
+           'Ocorreu um error ao fazer login, verifica as credenciais'
+           )
       }
-
-      return Alert.alert(
-        'Erro na autenticação', 
-        'Ocorreu um erro ao fazer login, verifique as credenciais.'
-      );
     }
   }
 
-  function handleRegister() {
-    navigation.navigate('SignUpFirstStep');
+  function handleNewAccount() {
+    navigation.navigate('FirstStep');
   }
 
-  return (
-    <KAV 
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollableContainer 
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <StatusBar 
-          barStyle="dark-content"
-          backgroundColor="transparent"
-          translucent
-        />
+  
 
-        <Header>
-          <Title>
-            Estamos{'\n'}
-            quase lá.
-          </Title>
+return (
+  //Para organizar o teclado com a tela
+  <KeyboardAvoidingView behavior="position" enabled>
+  {/*Para fechar o teclado quando clicar em qualquer outro lugar da tela */}
+  <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    
+ <Container>
+  <StatusBar 
+    barStyle="dark-content"
+    backgroundColor={theme.colors.background_primary}
+    translucent
+  />
+  <Header>
+    <Title>
+      Estamos{'\n'}
+      quase lá.
+    </Title>
+    <SubTitle>
+      Faça seu login para começar{'\n'}
+      uma experiência incrível
+    </SubTitle>
+  </Header>
 
-          <SubTitle>
-            Faça seu login para começar{'\n'}
-            uma experiência incrível.
-          </SubTitle>
-        </Header>
+    <Form>
+      <Input 
+        iconName='mail'
+        placeholder='E-mail'
+        keyboardType='email-address'
+        autoCorrect={false}
+        autoCapitalize="none"
+        onChangeText={setEmail}
+        value={email}
+      />
 
-        <Form>
-          <EmailInput
-            iconName="mail"
-            placeholder="E-mail"
-            keyboardType="email-address"
-            autoCorrect={false}
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
+    <PasswordInput
+      iconName="lock"
+      placeholder="Senha"
+      onChangeText={setPassword}
+      value={password}
+    />
+    </Form>
 
-          <PasswordInput 
-            placeholder="Senha"
-            autoCorrect={false}
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-          />
-        </Form>
+  <Footer>
+    <Button 
+      title="Login"
+      onPress={handleSignIn}
+      enabled={true}
+      loading={false}
+    />
 
-        <Footer>
-          <LoginButton 
-            title="Login"
-            onPress={handleSignIn}
-          />
-
-          <RegisterButton 
-            title="Criar conta gratuita"
-            onPress={handleRegister}
-          />
-        </Footer>
-      </ScrollableContainer>
-    </KAV>
+    <Button 
+      title="Criar conta gratuita"
+      color={theme.colors.background_secondary}
+      light
+      onPress={handleNewAccount}
+      enabled={true}
+      loading={false}
+    />
+  </Footer>
+ </Container>
+ </TouchableWithoutFeedback>
+ </KeyboardAvoidingView>
   );
 }
+
+/*
+------------PARA TESTA SE TEM GENTE LOGADO OU NAO
+import { database } from '../../database'
+
+useEffect(() => {
+    async function loadData() {
+      const usersCollection = database.get('users');
+      const users = await usersCollection.query().fetch();
+      console.log(users)
+    }
+
+    loadData();
+  },[])*/
