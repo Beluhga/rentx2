@@ -31,8 +31,5 @@ class User extends Model {
 
 export { User}
 
-/*
-const user = new User();
-*/
 
 

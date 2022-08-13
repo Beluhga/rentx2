@@ -1,6 +1,8 @@
 import { RFValue } from 'react-native-responsive-fontsize';
 import { FlatList} from 'react-native'
 import styled from 'styled-components/native';
+import {Car} from '../../database/model/Car';
+
 
 
 export const Container = styled.View`
@@ -40,6 +42,7 @@ export const CarList = styled(FlatList).attrs({
     showsVerticalScrollIndicator: false
 })`` as React.ComponentType as new <DataListProps>() => FlatList<DataListProps>;
 
+
  /* 
   export const MyCardsButton = styled(RectButton)`
     width: 60px;
@@ -56,5 +59,7 @@ export const CarList = styled(FlatList).attrs({
     bottom: 13px;
     right: 22px;
   `;
+
+  as React.ComponentType as new <DataListProps>() => FlatList<DataListProps>;
 
   */

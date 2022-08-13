@@ -35,6 +35,8 @@ interface AuthContextData {
     user: User;
     signIn: (credentials: SignInCredentials) => Promise<void>;
     signOut: () => Promise<void>;
+    updatedUser: (user: User) => Promise<void>;
+    loading: boolean;
 }
 
 interface AuthProviderProps {
@@ -49,6 +51,7 @@ function AuthProvider({children} : AuthProviderProps){
 
     //o estado para armazena os dados de autenticação eo dtipo de dado é o AuthState
     const [data, setData]= useState<User>({} as User);
+    const [loading, setLoading] = useState(true);
 
     //irar recebe os parametros do email e senha
     async function signIn({email, password} : SignInCredentials){
@@ -104,6 +107,26 @@ function AuthProvider({children} : AuthProviderProps){
             throw new Error(error);
         }
     }
+    // Atualizando Perfil
+    async function updatedUser(user: User) {
+        try {
+            const userCollection = database.get<ModelUser>('users');
+                await database.write(async () => {
+                    const userSelected = await userCollection.find(user.id);
+                    await userSelected.update(( userData ) => {
+                        userData.name = user.name,
+                        userData.driver_license = user.driver_license,
+                        userData.avatar = user.avatar
+                    });
+                });
+
+                setData(user);
+
+        } catch(error){
+            throw new Error(error);
+        }
+
+    }
 
     // para obter os dados do usuario
     useEffect(() => {
@@ -116,6 +139,7 @@ function AuthProvider({children} : AuthProviderProps){
                 const userData = response[0]._raw as unknown as User;
                 api.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
                 setData(userData);
+                setLoading(false);
 
 
             }
@@ -131,7 +155,9 @@ function AuthProvider({children} : AuthProviderProps){
         value= {{
             user: data,
             signIn,
-            signOut
+            signOut,
+            updatedUser,
+            loading
             }}
         >
             {children}
